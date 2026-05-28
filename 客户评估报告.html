@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>九九聊择偶 · 客户基础评估报告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  /* ===== Reset & Base ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    background: #f0f2f5;
+    color: #1a2332;
+    line-height: 1.6;
+    padding: 16px;
+    min-height: 100vh;
+  }
+
+  /* ===== Container ===== */
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    background: linear-gradient(135deg, #0B1D3A 0%, #1a3355 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .header .brand {
+    color: #C8A84E;
+    font-weight: 600;
+  }
+  .header .subtitle {
+    font-size: 0.8rem;
+    opacity: 0.75;
+    margin-top: 6px;
+  }
+
+  /* ===== Cards ===== */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0B1D3A;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-title .badge-count {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #888;
+    margin-left: auto;
+  }
+
+  /* ===== Selector Row (Gender + City) ===== */
+  .selector-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .selector-row .select-group {
+    flex: 1;
+  }
+  .selector-row .select-group label {
+    display: block;
+    font-size: 0.72rem;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .selector-row select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #d0d5dd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: #f9fafb;
+    color: #1a2332;
+    appearance: auto;
+    min-height: 44px;
+    transition: border-color 0.2s;
+  }
+  .selector-row select:focus {
+    outline: none;
+    border-color: #0B1D3A;
+    background: #fff;
+  }
+
+  /* ===== Dimension Row ===== */
+  .dim-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 10px;
+    min-height: 52px;
+  }
+  .dim-row:last-child { border-bottom: none; }
+
+  .dim-label {
+    flex: 0 0 68px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #333;
+  }
+  .dim-input {
+    flex: 1;
+    min-width: 0;
+  }
+  .dim-input input,
+  .dim-input select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: #f9fafb;
+    color: #1a2332;
+    min-height: 40px;
+    transition: border-color 0.2s;
+  }
+  .dim-input input:focus,
+  .dim-input select:focus {
+    outline: none;
+    border-color: #0B1D3A;
+    background: #fff;
+  }
+  .dim-input input[type="number"] { -moz-appearance: textfield; }
+  .dim-input input[type="number"]::-webkit-outer-spin-button,
+  .dim-input input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* ===== Score Badge ===== */
+  .score-badge {
+    flex: 0 0 48px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 0;
+    border-radius: 20px;
+    color: #fff;
+    min-width: 42px;
+  }
+  .score-high { background: #22a67e; }   /* 7-10 */
+  .score-mid  { background: #e68a2e; }   /* 4-6 */
+  .score-low  { background: #d1453b; }   /* 1-3 */
+  .score-zero { background: #ccc; color: #666; } /* 0 */
+
+  /* ===== Radar Chart ===== */
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    aspect-ratio: 1 / 1;
+  }
+  .chart-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ===== Total Score ===== */
+  .total-score {
+    text-align: center;
+    padding: 12px 0 4px;
+  }
+  .total-score .big-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #0B1D3A;
+    line-height: 1.2;
+  }
+  .total-score .big-number span { color: #C8A84E; }
+  .total-score .label {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 2px;
+  }
+  .total-score .avg-note {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-top: 4px;
+  }
+
+  /* ===== Subjective Section ===== */
+  .subjective-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0 4px;
+  }
+  .subjective-item {
+    background: #f7f8fa;
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #555;
+  }
+  .subjective-item .lock-icon {
+    display: block;
+    font-size: 0.65rem;
+    color: #C8A84E;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* ===== CTA ===== */
+  .cta-card {
+    background: linear-gradient(135deg, #0B1D3A 0%, #1a3355 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    margin-top: 4px;
+    text-align: center;
+  }
+  .cta-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .cta-card p {
+    font-size: 0.82rem;
+    opacity: 0.85;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .cta-btn {
+    display: inline-block;
+    background: #C8A84E;
+    color: #0B1D3A;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 12px 32px;
+    border-radius: 30px;
+    text-decoration: none;
+    min-height: 48px;
+    line-height: 1.4;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .cta-btn:active {
+    transform: scale(0.97);
+  }
+  .cta-hint {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-top: 10px;
+  }
+
+  /* ===== Footer ===== */
+  .footer {
+    text-align: center;
+    font-size: 0.65rem;
+    color: #aaa;
+    padding: 20px 0 8px;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 400px) {
+    body { padding: 10px; }
+    .card { padding: 12px 14px; }
+    .dim-label { flex-basis: 58px; font-size: 0.76rem; }
+    .score-badge { flex-basis: 38px; min-width: 36px; font-size: 0.78rem; }
+    .header h1 { font-size: 1.1rem; }
+    .subjective-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .total-score .big-number { font-size: 1.8rem; }
+  }
+
+  /* ===== Placeholder state ===== */
+  .dim-row .score-badge.placeholder {
+    background: #e8e8e8;
+    color: #bbb;
+    font-weight: 400;
+  }
+
+  /* Status hint */
+  .status-hint {
+    font-size: 0.72rem;
+    color: #999;
+    text-align: center;
+    padding: 2px 0 6px;
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+
+  <!-- ═══ Header ═══ -->
+  <div class="header">
+    <h1><span class="brand">九九聊择偶</span> · 客户基础评估报告</h1>
+    <div class="subtitle">7项客观维度自动评分 ｜ 剩余7项需顾问综合评估</div>
+  </div>
+
+  <!-- ═══ Gender + City Selectors ═══ -->
+  <div class="card">
+    <div class="selector-row">
+      <div class="select-group">
+        <label for="gender">性别</label>
+        <select id="gender">
+          <option value="female">女</option>
+          <option value="male">男</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <label for="cityTier">城市线级</label>
+        <select id="cityTier">
+          <option value="1">一线城市</option>
+          <option value="2">二线城市</option>
+          <option value="3">三线城市</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 7 Objective Dimensions ═══ -->
+  <div class="card">
+    <div class="card-title">
+      📋 客观维度评估
+      <span class="badge-count">7项</span>
+    </div>
+
+    <!-- 1. Age -->
+    <div class="dim-row" id="dim-age">
+      <div class="dim-label">年龄</div>
+      <div class="dim-input">
+        <input type="number" id="age" placeholder="出生年份 (如 1995)" min="1950" max="2010">
+      </div>
+      <div class="score-badge placeholder" id="score-age">-</div>
+    </div>
+
+    <!-- 2. Height -->
+    <div class="dim-row" id="dim-height">
+      <div class="dim-label">身高</div>
+      <div class="dim-input">
+        <input type="number" id="height" placeholder="cm (如 160)" min="120" max="220">
+      </div>
+      <div class="score-badge placeholder" id="score-height">-</div>
+    </div>
+
+    <!-- 3. Weight / Body -->
+    <div class="dim-row" id="dim-weight">
+      <div class="dim-label">体型</div>
+      <div class="dim-input">
+        <input type="number" id="weight" placeholder="kg (如 55)" min="30" max="200" step="0.5">
+      </div>
+      <div class="score-badge placeholder" id="score-weight">-</div>
+    </div>
+
+    <!-- 4. Education -->
+    <div class="dim-row" id="dim-edu">
+      <div class="dim-label">学历</div>
+      <div class="dim-input">
+        <select id="education">
+          <option value="">请选择</option>
+          <option value="phd">博士</option>
+          <option value="master">硕士 / 海归</option>
+          <option value="985">本科（985/211）</option>
+          <option value="bachelor">本科（普通）</option>
+          <option value="college">大专</option>
+          <option value="highschool">高中 / 中专</option>
+          <option value="middleschool">初中及以下</option>
+        </select>
+      </div>
+      <div class="score-badge placeholder" id="score-edu">-</div>
+    </div>
+
+    <!-- 5. Income -->
+    <div class="dim-row" id="dim-income">
+      <div class="dim-label">工作收入</div>
+      <div class="dim-input">
+        <select id="income">
+          <option value="">请选择</option>
+          <option value="100w+">100万+</option>
+          <option value="50w_100w">50万 - 100万</option>
+          <option value="30w_50w">30万 - 50万</option>
+          <option value="15w_30w">15万 - 30万</option>
+          <option value="10w_15w">10万 - 15万</option>
+          <option value="5w_10w">5万 - 10万</option>
+          <option value="under5w">5万以下</option>
+          <option value="none">无收入</option>
+        </select>
+      </div>
+      <div class="score-badge placeholder" id="score-income">-</div>
+    </div>
+
+    <!-- 6. Family Wealth -->
+    <div class="dim-row" id="dim-wealth">
+      <div class="dim-label">家境</div>
+      <div class="dim-input">
+        <select id="wealth">
+          <option value="">请选择</option>
+          <option value="100m+">1亿以上</option>
+          <option value="50m_100m">5000万 - 1亿</option>
+          <option value="10m_50m">1000万 - 5000万</option>
+          <option value="5m_10m">500万 - 1000万</option>
+          <option value="1m_5m">100万 - 500万</option>
+          <option value="500k_1m">50万 - 100万</option>
+          <option value="under500k">50万以下</option>
+        </select>
+      </div>
+      <div class="score-badge placeholder" id="score-wealth">-</div>
+    </div>
+
+    <!-- 7. Marriage -->
+    <div class="dim-row" id="dim-marriage">
+      <div class="dim-label">婚姻情况</div>
+      <div class="dim-input">
+        <select id="marriage">
+          <option value="">请选择</option>
+          <option value="never">未婚</option>
+          <option value="divorced_nochild">离异无孩</option>
+          <option value="divorced_other">离异有孩（对方抚养）</option>
+          <option value="divorced_self">离异有孩（自己抚养）</option>
+        </select>
+      </div>
+      <div class="score-badge placeholder" id="score-marriage">-</div>
+    </div>
+  </div>
+
+  <!-- ═══ Radar Chart ═══ -->
+  <div class="card">
+    <div class="card-title">
+      🕸️ 综合能力雷达图
+      <span class="badge-count">7 维度</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="radarChart" width="400" height="400"></canvas>
+    </div>
+
+    <!-- Total Score -->
+    <div class="total-score" id="totalScoreArea">
+      <div class="big-number"><span id="totalScore">-</span> / 70</div>
+      <div class="label">客观维度总分</div>
+      <div class="avg-note" id="avgNote">请填写数据开始评估</div>
+    </div>
+    <div class="status-hint" id="statusHint">填写所有7项即可看到完整评分</div>
+  </div>
+
+  <!-- ═══ 7 Subjective Dimensions ═══ -->
+  <div class="card">
+    <div class="card-title">
+      🔒 主观维度
+      <span class="badge-count">需顾问评估 · 7项</span>
+    </div>
+    <p style="font-size:0.78rem;color:#888;margin-bottom:8px;line-height:1.5;">
+      以下维度无法通过线上数据客观评分，需要顾问一对一综合评估
+    </p>
+    <div class="subjective-grid">
+      <div class="subjective-item">颜值<span class="lock-icon">🔒 需顾问评估</span></div>
+      <div class="subjective-item">家庭帮扶<span class="lock-icon">🔒 需顾问评估</span></div>
+      <div class="subjective-item">工作性质<span class="lock-icon">🔒 需顾问评估</span></div>
+      <div class="subjective-item">性价值<span class="lock-icon">🔒 需顾问评估</span></div>
+      <div class="subjective-item">情绪价值<span class="lock-icon">🔒 需顾问评估</span></div>
+      <div class="subjective-item">付出意识<span class="lock-icon">🔒 需顾问评估</span></div>
+      <div class="subjective-item" style="grid-column: 1 / -1;">健康<span class="lock-icon">🔒 需顾问评估</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ CTA ═══ -->
+  <div class="cta-card">
+    <h3>想获得包含所有14项维度的完整报告？</h3>
+    <p>
+      以上7项仅为基础客观评估。<br>
+      预约一对一咨询，顾问将综合评估全部14项维度，<br>
+      输出完整的个人择偶定位报告。
+    </p>
+    <a class="cta-btn" href="javascript:void(0)" id="ctaBtn">👉 预约咨询</a>
+    <div class="cta-hint">微信号：jiujiu_liaozee</div>
+  </div>
+
+  <div class="footer">
+    九九聊择偶 · 数据仅本地计算，不上传服务器
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ═══════════════════════════════════════════
+  //  1. 查分表数据
+  // ═══════════════════════════════════════════
+
+  // ---- 年龄查分表 ----
+  // key: 城市线级, gender: female/male
+  // score by age range
+  const AGE_TABLE = {
+    female: {
+      1: [  // 一线
+        { max: 22, score: 8 },
+        { max: 23, score: 9 },
+        { max: 25, score: 10 },
+        { max: 27, score: 9 },
+        { max: 29, score: 8 },
+        { max: 31, score: 6 },
+        { max: 34, score: 4 },
+        { max: 37, score: 2 },
+        { max: 40, score: 1 },
+        { max: 999, score: 0 }
+      ],
+      2: [  // 二线
+        { max: 22, score: 9 },
+        { max: 23, score: 10 },
+        { max: 25, score: 9 },
+        { max: 27, score: 8 },
+        { max: 29, score: 6 },
+        { max: 31, score: 4 },
+        { max: 34, score: 2 },
+        { max: 37, score: 1 },
+        { max: 999, score: 0 }
+      ],
+      3: [  // 三线
+        { max: 22, score: 10 },
+        { max: 23, score: 9 },
+        { max: 25, score: 8 },
+        { max: 27, score: 6 },
+        { max: 29, score: 4 },
+        { max: 31, score: 2 },
+        { max: 34, score: 1 },
+        { max: 999, score: 0 }
+      ]
+    },
+    male: {
+      1: [
+        { max: 22, score: 3 },
+        { max: 24, score: 5 },
+        { max: 26, score: 6 },
+        { max: 28, score: 7 },
+        { max: 30, score: 8 },
+        { max: 33, score: 9 },
+        { max: 36, score: 10 },
+        { max: 40, score: 9 },
+        { max: 45, score: 7 },
+        { max: 999, score: 5 }
+      ],
+      2: [
+        { max: 22, score: 3 },
+        { max: 24, score: 5 },
+        { max: 26, score: 6 },
+        { max: 28, score: 7 },
+        { max: 30, score: 8 },
+        { max: 33, score: 9 },
+        { max: 36, score: 10 },
+        { max: 40, score: 9 },
+        { max: 45, score: 7 },
+        { max: 999, score: 5 }
+      ],
+      3: [
+        { max: 22, score: 4 },
+        { max: 24, score: 5 },
+        { max: 26, score: 6 },
+        { max: 28, score: 7 },
+        { max: 30, score: 8 },
+        { max: 33, score: 9 },
+        { max: 36, score: 9 },
+        { max: 40, score: 8 },
+        { max: 45, score: 6 },
+        { max: 999, score: 4 }
+      ]
+    }
+  };
+
+  // ---- 身高查分表 ----
+  const HEIGHT_TABLE = {
+    female: [
+      { max: 149, score: 1 },
+      { max: 154, score: 3 },
+      { max: 159, score: 5 },
+      { max: 164, score: 7 },
+      { max: 169, score: 9 },
+      { max: 174, score: 8 },
+      { max: 999, score: 6 }
+    ],
+    male: [
+      { max: 164, score: 1 },
+      { max: 169, score: 3 },
+      { max: 174, score: 5 },
+      { max: 179, score: 7 },
+      { max: 184, score: 9 },
+      { max: 189, score: 8 },
+      { max: 999, score: 6 }
+    ]
+  };
+
+  // ---- 体型查分表 (BMI-based) ----
+  // BMI = weight(kg) / (height-m)²
+  const BMI_TABLE = {
+    female: [
+      { max: 15.9, score: 2 },
+      { max: 17.4, score: 5 },
+      { max: 18.4, score: 7 },
+      { max: 20.4, score: 10 },
+      { max: 22.9, score: 9 },
+      { max: 24.9, score: 6 },
+      { max: 27.9, score: 4 },
+      { max: 999, score: 2 }
+    ],
+    male: [
+      { max: 16.9, score: 2 },
+      { max: 18.4, score: 5 },
+      { max: 19.9, score: 7 },
+      { max: 22.9, score: 10 },
+      { max: 24.9, score: 8 },
+      { max: 27.9, score: 5 },
+      { max: 29.9, score: 3 },
+      { max: 999, score: 1 }
+    ]
+  };
+
+  // ---- 学历查分表 ----
+  const EDU_TABLE = {
+    female: {
+      1: { phd: 6, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 1 },
+      2: { phd: 6, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 1 },
+      3: { phd: 7, master: 9, '985': 9, bachelor: 7, college: 5, highschool: 4, middleschool: 2 }
+    },
+    male: {
+      1: { phd: 8, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 1 },
+      2: { phd: 8, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 1 },
+      3: { phd: 8, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 2 }
+    }
+  };
+
+  // ---- 收入查分表 ----
+  const INCOME_TABLE = {
+    female: {
+      1: { '100w+': 10, '50w_100w': 9, '30w_50w': 8, '15w_30w': 7, '10w_15w': 6, '5w_10w': 5, under5w: 4, none: 3 },
+      2: { '100w+': 10, '50w_100w': 10, '30w_50w': 9, '15w_30w': 8, '10w_15w': 7, '5w_10w': 6, under5w: 4, none: 3 },
+      3: { '100w+': 10, '50w_100w': 10, '30w_50w': 10, '15w_30w': 9, '10w_15w': 8, '5w_10w': 7, under5w: 5, none: 3 }
+    },
+    male: {
+      1: { '100w+': 10, '50w_100w': 9, '30w_50w': 8, '15w_30w': 7, '10w_15w': 5, '5w_10w': 3, under5w: 2, none: 1 },
+      2: { '100w+': 10, '50w_100w': 10, '30w_50w': 9, '15w_30w': 8, '10w_15w': 6, '5w_10w': 4, under5w: 2, none: 1 },
+      3: { '100w+': 10, '50w_100w': 10, '30w_50w': 10, '15w_30w': 9, '10w_15w': 7, '5w_10w': 5, under5w: 3, none: 1 }
+    }
+  };
+
+  // ---- 家境查分表 ----
+  const WEALTH_TABLE = {
+    female: {
+      1: { '100m+': 10, '50m_100m': 9, '10m_50m': 8, '5m_10m': 7, '1m_5m': 6, '500k_1m': 4, under500k: 2 },
+      2: { '100m+': 10, '50m_100m': 10, '10m_50m': 9, '5m_10m': 8, '1m_5m': 7, '500k_1m': 5, under500k: 3 },
+      3: { '100m+': 10, '50m_100m': 10, '10m_50m': 10, '5m_10m': 9, '1m_5m': 8, '500k_1m': 6, under500k: 4 }
+    },
+    male: {
+      1: { '100m+': 10, '50m_100m': 9, '10m_50m': 8, '5m_10m': 7, '1m_5m': 5, '500k_1m': 3, under500k: 1 },
+      2: { '100m+': 10, '50m_100m': 10, '10m_50m': 9, '5m_10m': 8, '1m_5m': 6, '500k_1m': 4, under500k: 2 },
+      3: { '100m+': 10, '50m_100m': 10, '10m_50m': 10, '5m_10m': 9, '1m_5m': 7, '500k_1m': 5, under500k: 3 }
+    }
+  };
+
+  // ---- 婚姻扣分表 ----
+  const MARRIAGE_TABLE = {
+    never: 0,
+    divorced_nochild: 2,
+    divorced_other: 3,
+    divorced_self: 5
+  };
+
+  // ═══════════════════════════════════════════
+  //  2. DOM refs
+  // ═══════════════════════════════════════════
+
+  const $ = id => document.getElementById(id);
+  const genderEl = $('gender');
+  const cityEl = $('cityTier');
+  const ageEl = $('age');
+  const heightEl = $('height');
+  const weightEl = $('weight');
+  const eduEl = $('education');
+  const incomeEl = $('income');
+  const wealthEl = $('wealth');
+  const marriageEl = $('marriage');
+
+  const scoreEls = {
+    age: $('score-age'),
+    height: $('score-height'),
+    weight: $('score-weight'),
+    edu: $('score-edu'),
+    income: $('score-income'),
+    wealth: $('score-wealth'),
+    marriage: $('score-marriage')
+  };
+
+  const totalScoreEl = $('totalScore');
+  const avgNoteEl = $('avgNote');
+  const statusHintEl = $('statusHint');
+
+  // ═══════════════════════════════════════════
+  //  3. Helper: lookup score from table
+  // ═══════════════════════════════════════════
+
+  function lookup(table, value) {
+    for (const row of table) {
+      if (value <= row.max) return row.score;
+    }
+    return 0;
+  }
+
+  function getGender() { return genderEl.value; }
+  function getCityTier() { return parseInt(cityEl.value, 10); }
+
+  // ═══════════════════════════════════════════
+  //  4. Scoring functions
+  // ═══════════════════════════════════════════
+
+  function calcAgeScore() {
+    const birthYear = parseInt(ageEl.value, 10);
+    if (!birthYear) return null;
+    const age = 2026 - birthYear;
+    if (age < 16 || age > 80) return null;
+    const gender = getGender();
+    const tier = getCityTier();
+    return lookup(AGE_TABLE[gender][tier], age);
+  }
+
+  function calcHeightScore() {
+    const cm = parseInt(heightEl.value, 10);
+    if (!cm) return null;
+    const gender = getGender();
+    return lookup(HEIGHT_TABLE[gender], cm);
+  }
+
+  function calcWeightScore() {
+    const kg = parseFloat(weightEl.value);
+    const cm = parseInt(heightEl.value, 10);
+    if (!kg || !cm) return null;
+    const heightM = cm / 100;
+    const bmi = kg / (heightM * heightM);
+    if (bmi < 10 || bmi > 50) return null;
+    const gender = getGender();
+    return lookup(BMI_TABLE[gender], bmi);
+  }
+
+  function calcEduScore() {
+    const val = eduEl.value;
+    if (!val) return null;
+    const gender = getGender();
+    const tier = getCityTier();
+    return EDU_TABLE[gender][tier][val] ?? null;
+  }
+
+  function calcIncomeScore() {
+    const val = incomeEl.value;
+    if (!val) return null;
+    const gender = getGender();
+    const tier = getCityTier();
+    return INCOME_TABLE[gender][tier][val] ?? null;
+  }
+
+  function calcWealthScore() {
+    const val = wealthEl.value;
+    if (!val) return null;
+    const gender = getGender();
+    const tier = getCityTier();
+    return WEALTH_TABLE[gender][tier][val] ?? null;
+  }
+
+  function calcMarriageScore() {
+    const val = marriageEl.value;
+    if (!val) return null;
+    const penalty = MARRIAGE_TABLE[val] ?? 0;
+    return Math.max(0, 10 - penalty);
+  }
+
+  // ═══════════════════════════════════════════
+  //  5. Aggregate & update
+  // ═══════════════════════════════════════════
+
+  const CALC_FUNCS = [
+    { key: 'age',    fn: calcAgeScore },
+    { key: 'height', fn: calcHeightScore },
+    { key: 'weight', fn: calcWeightScore },
+    { key: 'edu',    fn: calcEduScore },
+    { key: 'income', fn: calcIncomeScore },
+    { key: 'wealth', fn: calcWealthScore },
+    { key: 'marriage', fn: calcMarriageScore }
+  ];
+
+  let chartInstance = null;
+
+  const DIM_LABELS = ['年龄', '身高', '体型', '学历', '收入', '家境', '婚姻'];
+
+  function updateAll() {
+    const scores = {};
+    let total = 0;
+    let filledCount = 0;
+
+    // Calculate each score
+    for (const { key, fn } of CALC_FUNCS) {
+      const s = fn();
+      scores[key] = s;
+      if (s !== null) {
+        total += s;
+        filledCount++;
+      }
+    }
+
+    // Update score badges
+    for (const { key } of CALC_FUNCS) {
+      const el = scoreEls[key];
+      const s = scores[key];
+      if (s === null) {
+        el.textContent = '-';
+        el.className = 'score-badge placeholder';
+      } else {
+        el.textContent = s + '分';
+        el.className = 'score-badge ' + getScoreLevel(s);
+      }
+    }
+
+    // Update total
+    if (filledCount === 7) {
+      totalScoreEl.textContent = total;
+      const avg = (total / 7).toFixed(1);
+      avgNoteEl.textContent = '平均 ' + avg + ' / 10 分';
+      statusHintEl.textContent = '✅ 7项客观维度已全部填写';
+    } else if (filledCount > 0) {
+      totalScoreEl.textContent = total + ' / 70';
+      avgNoteEl.textContent = '已填 ' + filledCount + '/7 项';
+      statusHintEl.textContent = '⚠️ 还差 ' + (7 - filledCount) + ' 项未填写';
+    } else {
+      totalScoreEl.textContent = '-';
+      avgNoteEl.textContent = '请填写数据开始评估';
+      statusHintEl.textContent = '填写所有7项即可看到完整评分';
+    }
+
+    // Update radar chart
+    updateChart(scores);
+  }
+
+  function getScoreLevel(s) {
+    if (s >= 7) return 'score-high';
+    if (s >= 4) return 'score-mid';
+    return 'score-low';
+  }
+
+  // ═══════════════════════════════════════════
+  //  6. Radar Chart (Chart.js)
+  // ═══════════════════════════════════════════
+
+  function updateChart(scores) {
+    const ctx = document.getElementById('radarChart').getContext('2d');
+
+    const dataValues = [];
+    let hasData = false;
+    for (const { key } of CALC_FUNCS) {
+      const v = scores[key];
+      if (v !== null) {
+        dataValues.push(v);
+        hasData = true;
+      } else {
+        dataValues.push(0);
+      }
+    }
+
+    if (!hasData) {
+      // Destroy if empty
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+      // Draw empty hint on canvas if needed — just destroy for now
+      return;
+    }
+
+    const data = {
+      labels: DIM_LABELS,
+      datasets: [{
+        label: '当前评分',
+        data: dataValues,
+        backgroundColor: 'rgba(68, 114, 196, 0.25)',
+        borderColor: 'rgba(68, 114, 196, 0.85)',
+        borderWidth: 2,
+        pointBackgroundColor: 'rgba(68, 114, 196, 0.9)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1.5,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    };
+
+    const config = {
+      type: 'radar',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: { duration: 300 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.parsed.r + ' / 10';
+              }
+            }
+          }
+        },
+        scales: {
+          r: {
+            min: 0,
+            max: 10,
+            ticks: {
+              stepSize: 2,
+              font: { size: 10 },
+              backdropColor: 'transparent',
+              color: '#999'
+            },
+            pointLabels: {
+              font: {
+                size: 11,
+                weight: '600',
+                family: '"PingFang SC", "Microsoft YaHei", sans-serif'
+              },
+              color: '#333'
+            },
+            grid: {
+              color: 'rgba(0,0,0,0.08)'
+            },
+            angleLines: {
+              color: 'rgba(0,0,0,0.10)'
+            }
+          }
+        }
+      }
+    };
+
+    if (chartInstance) {
+      chartInstance.data = data;
+      chartInstance.update('none');
+    } else {
+      chartInstance = new Chart(ctx, config);
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  //  7. Event Wiring
+  // ═══════════════════════════════════════════
+
+  const inputEls = [
+    genderEl, cityEl, ageEl, heightEl, weightEl,
+    eduEl, incomeEl, wealthEl, marriageEl
+  ];
+
+  for (const el of inputEls) {
+    el.addEventListener('change', updateAll);
+    el.addEventListener('input', updateAll);
+  }
+
+  // ═══════════════════════════════════════════
+  //  8. Init
+  // ═══════════════════════════════════════════
+
+  updateAll();
+
+})();
+</script>
+</body>
+</html>
