@@ -269,6 +269,35 @@
     margin-top: 10px;
   }
 
+  /* ===== WeChat Box ===== */
+  .wechat-box {
+    background: rgba(255,255,255,0.12);
+    border: 1.5px dashed rgba(255,255,255,0.35);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .wechat-label {
+    font-size: 0.7rem;
+    opacity: 0.65;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .wechat-id {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #C8A84E;
+    word-break: break-all;
+  }
+
+  /* Copy feedback */
+  .cta-btn.copied {
+    background: #22a67e;
+    color: #fff;
+  }
+
   /* ===== Footer ===== */
   .footer {
     text-align: center;
@@ -340,7 +369,7 @@
       <div class="dim-input">
         <input type="number" id="age" placeholder="出生年份 (如 1995)" min="1950" max="2010">
       </div>
-      <div class="score-badge placeholder" id="score-age">-</div>
+      <!-- score hidden -->
     </div>
 
     <!-- 2. Height -->
@@ -349,7 +378,6 @@
       <div class="dim-input">
         <input type="number" id="height" placeholder="cm (如 160)" min="120" max="220">
       </div>
-      <div class="score-badge placeholder" id="score-height">-</div>
     </div>
 
     <!-- 3. Weight / Body -->
@@ -358,7 +386,7 @@
       <div class="dim-input">
         <input type="number" id="weight" placeholder="kg (如 55)" min="30" max="200" step="0.5">
       </div>
-      <div class="score-badge placeholder" id="score-weight">-</div>
+      <!-- score hidden -->
     </div>
 
     <!-- 4. Education -->
@@ -376,7 +404,7 @@
           <option value="middleschool">初中及以下</option>
         </select>
       </div>
-      <div class="score-badge placeholder" id="score-edu">-</div>
+      <!-- score hidden -->
     </div>
 
     <!-- 5. Income -->
@@ -395,7 +423,7 @@
           <option value="none">无收入</option>
         </select>
       </div>
-      <div class="score-badge placeholder" id="score-income">-</div>
+
     </div>
 
     <!-- 6. Family Wealth -->
@@ -413,7 +441,6 @@
           <option value="under500k"><50万</option>
         </select>
       </div>
-      <div class="score-badge placeholder" id="score-wealth">-</div>
     </div>
 
     <!-- 7. Marriage -->
@@ -429,7 +456,6 @@
           <option value="divorced_self">离异有孩（自己抚养）</option>
         </select>
       </div>
-      <div class="score-badge placeholder" id="score-marriage">-</div>
     </div>
   </div>
 
@@ -480,8 +506,12 @@
       预约一对一咨询，顾问将综合评估全部14项维度，<br>
       输出完整的个人择偶定位报告。
     </p>
-    <a class="cta-btn" href="javascript:void(0)" id="ctaBtn">👉 预约咨询</a>
-    <div class="cta-hint">微信号：jiujiu_liaozee</div>
+    <div class="wechat-box" id="wechatBox">
+      <div class="wechat-label">微信咨询</div>
+      <div class="wechat-id" id="wechatId">linjiujiu01</div>
+    </div>
+    <a class="cta-btn" href="javascript:void(0)" id="ctaBtn">📋 复制微信号</a>
+    <div class="cta-hint">点击上方按钮复制 → 打开微信添加好友</div>
   </div>
 
   <div class="footer">
@@ -555,16 +585,6 @@
   const wealthEl = $('wealth');
   const marriageEl = $('marriage');
 
-  const scoreEls = {
-    age: $('score-age'),
-    height: $('score-height'),
-    weight: $('score-weight'),
-    edu: $('score-edu'),
-    income: $('score-income'),
-    wealth: $('score-wealth'),
-    marriage: $('score-marriage')
-  };
-
   const totalScoreEl = $('totalScore');
   const avgNoteEl = $('avgNote');
   const statusHintEl = $('statusHint');
@@ -605,18 +625,21 @@
     const cm = parseInt(heightEl.value, 10);
     if (!kg || !cm) return null;
 
-    // 美体体重 = height² × 20.02 / 10000 (BMI≈20, 来源:用户美体体重表)
-    const bw = (cm * cm) * 20.02 / 10000;       // 美体体重
-    const sw = (cm * cm) * 22 / 10000;          // 标准体重
+    // 美体体重 = height² × 20.02 / 10000 (BMI≈20)
+    const bw = (cm * cm) * 20.02 / 10000;
+    const sw = (cm * cm) * 22 / 10000;
     const d = kg - bw; // 偏离美体: + = 偏重, - = 偏瘦
 
     if (Math.abs(d) <= 1) return 10;
     if (Math.abs(d) <= 2) return 9;
-    if (d > 2 && kg <= sw) return 8;
-    if (kg > sw && kg <= sw + 3) return 7;
-    if (kg > sw + 3 && kg <= sw + 5) return 6;
-    if ((kg > sw + 5 && kg <= sw + 10) || (d < -2 && d >= -5)) return 5;
-    if ((kg > sw + 10 && kg <= sw + 15) || (d < -5)) return 4;
+    if (d > 2 && kg <= sw) return 8;             // 美体→标准之间
+    if (d < -2 && d >= -3) return 8;             // 略偏瘦, 仍有线条感
+    if (kg > sw && kg <= sw + 3) return 7;        // 标准~标准+3
+    if (d < -3 && d >= -5) return 7;             // 偏瘦但匀称
+    if (kg > sw + 3 && kg <= sw + 5) return 6;    // 标准+3~+5
+    if (d < -5 && d >= -7) return 5;             // 明显偏瘦
+    if ((kg > sw + 5 && kg <= sw + 10)) return 5; // 标准+5~+10
+    if ((kg > sw + 10 && kg <= sw + 15) || d < -7) return 4;
     if (kg > sw + 15 && kg <= sw + 20) return 3;
     if (kg > sw + 20 && kg <= sw + 25) return 2;
     return 1;
@@ -680,19 +703,6 @@
       }
     }
 
-    // Update score badges
-    for (const { key } of CALC_FUNCS) {
-      const el = scoreEls[key];
-      const s = scores[key];
-      if (s === null) {
-        el.textContent = '-';
-        el.className = 'score-badge placeholder';
-      } else {
-        el.textContent = s + '分';
-        el.className = 'score-badge ' + getScoreLevel(s);
-      }
-    }
-
     // Update total
     if (filledCount === 7) {
       totalScoreEl.textContent = total;
@@ -711,12 +721,6 @@
 
     // Update radar chart
     updateChart(scores);
-  }
-
-  function getScoreLevel(s) {
-    if (s >= 7) return 'score-high';
-    if (s >= 4) return 'score-mid';
-    return 'score-low';
   }
 
   // ═══════════════════════════════════════════
@@ -833,7 +837,43 @@
   }
 
   // ═══════════════════════════════════════════
-  //  8. Init
+  //  8. CTA: 复制微信号
+  // ═══════════════════════════════════════════
+
+  const ctaBtn = $('ctaBtn');
+  const wechatId = 'linjiujiu01';
+
+  ctaBtn.addEventListener('click', function() {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(wechatId).then(function() {
+        ctaBtn.textContent = '✅ 已复制，打开微信添加好友';
+        ctaBtn.classList.add('copied');
+        setTimeout(function() {
+          ctaBtn.textContent = '📋 复制微信号';
+          ctaBtn.classList.remove('copied');
+        }, 2500);
+      });
+    } else {
+      // Fallback for older browsers / WeChat browser
+      var ta = document.createElement('textarea');
+      ta.value = wechatId;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      ctaBtn.textContent = '✅ 已复制: ' + wechatId;
+      ctaBtn.classList.add('copied');
+      setTimeout(function() {
+        ctaBtn.textContent = '📋 复制微信号';
+        ctaBtn.classList.remove('copied');
+      }, 2500);
+    }
+  });
+
+  // ═══════════════════════════════════════════
+  //  9. Init
   // ═══════════════════════════════════════════
 
   updateAll();
