@@ -313,16 +313,9 @@
     <div class="subtitle">7项客观维度自动评分 ｜ 剩余7项需顾问综合评估</div>
   </div>
 
-  <!-- ═══ Gender + City Selectors ═══ -->
+  <!-- ═══ City Selector ═══ -->
   <div class="card">
     <div class="selector-row">
-      <div class="select-group">
-        <label for="gender">性别</label>
-        <select id="gender">
-          <option value="female">女</option>
-          <option value="male">男</option>
-        </select>
-      </div>
       <div class="select-group">
         <label for="cityTier">城市线级</label>
         <select id="cityTier">
@@ -395,10 +388,10 @@
           <option value="100w+">100万+</option>
           <option value="50w_100w">50万 - 100万</option>
           <option value="30w_50w">30万 - 50万</option>
-          <option value="15w_30w">15万 - 30万</option>
-          <option value="10w_15w">10万 - 15万</option>
+          <option value="10w_30w">10万 - 30万</option>
           <option value="5w_10w">5万 - 10万</option>
-          <option value="under5w">5万以下</option>
+          <option value="1w_5w">1万 - 5万</option>
+          <option value="under1w">1万以下</option>
           <option value="none">无收入</option>
         </select>
       </div>
@@ -411,13 +404,13 @@
       <div class="dim-input">
         <select id="wealth">
           <option value="">请选择</option>
-          <option value="100m+">1亿以上</option>
-          <option value="50m_100m">5000万 - 1亿</option>
-          <option value="10m_50m">1000万 - 5000万</option>
-          <option value="5m_10m">500万 - 1000万</option>
-          <option value="1m_5m">100万 - 500万</option>
-          <option value="500k_1m">50万 - 100万</option>
-          <option value="under500k">50万以下</option>
+          <option value="100m+">1亿+</option>
+          <option value="50m_100m">5000万+</option>
+          <option value="10m_50m">1000万+</option>
+          <option value="5m_10m">500万+</option>
+          <option value="1m_5m">100万+</option>
+          <option value="500k_1m">50万+</option>
+          <option value="under500k"><50万</option>
         </select>
       </div>
       <div class="score-badge placeholder" id="score-wealth">-</div>
@@ -429,7 +422,8 @@
       <div class="dim-input">
         <select id="marriage">
           <option value="">请选择</option>
-          <option value="never">未婚</option>
+          <option value="never">未婚未育</option>
+          <option value="cohabited">未婚有同居史</option>
           <option value="divorced_nochild">离异无孩</option>
           <option value="divorced_other">离异有孩（对方抚养）</option>
           <option value="divorced_self">离异有孩（自己抚养）</option>
@@ -500,183 +494,51 @@
   'use strict';
 
   // ═══════════════════════════════════════════
-  //  1. 查分表数据
+  //  1. 查分表数据（来源: 99_婚恋价值评估系统_v2.xlsx）
   // ═══════════════════════════════════════════
 
-  // ---- 年龄查分表 ----
-  // key: 城市线级, gender: female/male
-  // score by age range
+  // ---- 年龄查分表 （女生）----
+  // 来源: 女生评估 sheet
   const AGE_TABLE = {
-    female: {
-      1: [  // 一线
-        { max: 22, score: 8 },
-        { max: 23, score: 9 },
-        { max: 25, score: 10 },
-        { max: 27, score: 9 },
-        { max: 29, score: 8 },
-        { max: 31, score: 6 },
-        { max: 34, score: 4 },
-        { max: 37, score: 2 },
-        { max: 40, score: 1 },
-        { max: 999, score: 0 }
-      ],
-      2: [  // 二线
-        { max: 22, score: 9 },
-        { max: 23, score: 10 },
-        { max: 25, score: 9 },
-        { max: 27, score: 8 },
-        { max: 29, score: 6 },
-        { max: 31, score: 4 },
-        { max: 34, score: 2 },
-        { max: 37, score: 1 },
-        { max: 999, score: 0 }
-      ],
-      3: [  // 三线
-        { max: 22, score: 10 },
-        { max: 23, score: 9 },
-        { max: 25, score: 8 },
-        { max: 27, score: 6 },
-        { max: 29, score: 4 },
-        { max: 31, score: 2 },
-        { max: 34, score: 1 },
-        { max: 999, score: 0 }
-      ]
-    },
-    male: {
-      1: [
-        { max: 22, score: 3 },
-        { max: 24, score: 5 },
-        { max: 26, score: 6 },
-        { max: 28, score: 7 },
-        { max: 30, score: 8 },
-        { max: 33, score: 9 },
-        { max: 36, score: 10 },
-        { max: 40, score: 9 },
-        { max: 45, score: 7 },
-        { max: 999, score: 5 }
-      ],
-      2: [
-        { max: 22, score: 3 },
-        { max: 24, score: 5 },
-        { max: 26, score: 6 },
-        { max: 28, score: 7 },
-        { max: 30, score: 8 },
-        { max: 33, score: 9 },
-        { max: 36, score: 10 },
-        { max: 40, score: 9 },
-        { max: 45, score: 7 },
-        { max: 999, score: 5 }
-      ],
-      3: [
-        { max: 22, score: 4 },
-        { max: 24, score: 5 },
-        { max: 26, score: 6 },
-        { max: 28, score: 7 },
-        { max: 30, score: 8 },
-        { max: 33, score: 9 },
-        { max: 36, score: 9 },
-        { max: 40, score: 8 },
-        { max: 45, score: 6 },
-        { max: 999, score: 4 }
-      ]
-    }
+    1: [{max:24,s:10},{max:27,s:9},{max:30,s:8},{max:32,s:7},{max:35,s:6},{max:37,s:5},{max:40,s:4},{max:43,s:3},{max:46,s:2},{max:999,s:1}],
+    2: [{max:23,s:10},{max:26,s:9},{max:28,s:8},{max:30,s:7},{max:33,s:6},{max:36,s:5},{max:39,s:4},{max:42,s:3},{max:45,s:2},{max:999,s:1}],
+    3: [{max:22,s:10},{max:24,s:9},{max:26,s:8},{max:28,s:7},{max:31,s:6},{max:34,s:5},{max:37,s:4},{max:40,s:3},{max:43,s:2},{max:999,s:1}]
   };
 
-  // ---- 身高查分表 ----
-  const HEIGHT_TABLE = {
-    female: [
-      { max: 149, score: 1 },
-      { max: 154, score: 3 },
-      { max: 159, score: 5 },
-      { max: 164, score: 7 },
-      { max: 169, score: 9 },
-      { max: 174, score: 8 },
-      { max: 999, score: 6 }
-    ],
-    male: [
-      { max: 164, score: 1 },
-      { max: 169, score: 3 },
-      { max: 174, score: 5 },
-      { max: 179, score: 7 },
-      { max: 184, score: 9 },
-      { max: 189, score: 8 },
-      { max: 999, score: 6 }
-    ]
-  };
+  // ---- 身高查分表 （女生）----
+  // 来源: 女生评估 sheet
+  const HEIGHT_TABLE = [
+    {max:144,s:1},{max:147,s:2},{max:149,s:3},{max:152,s:4},{max:154,s:5},{max:157,s:6},{max:159,s:7},{max:162,s:8},{max:164,s:9},{max:175,s:10},{max:999,s:8}
+  ];
 
-  // ---- 体型查分表 (BMI-based) ----
-  // BMI = weight(kg) / (height-m)²
-  const BMI_TABLE = {
-    female: [
-      { max: 15.9, score: 2 },
-      { max: 17.4, score: 5 },
-      { max: 18.4, score: 7 },
-      { max: 20.4, score: 10 },
-      { max: 22.9, score: 9 },
-      { max: 24.9, score: 6 },
-      { max: 27.9, score: 4 },
-      { max: 999, score: 2 }
-    ],
-    male: [
-      { max: 16.9, score: 2 },
-      { max: 18.4, score: 5 },
-      { max: 19.9, score: 7 },
-      { max: 22.9, score: 10 },
-      { max: 24.9, score: 8 },
-      { max: 27.9, score: 5 },
-      { max: 29.9, score: 3 },
-      { max: 999, score: 1 }
-    ]
-  };
-
-  // ---- 学历查分表 ----
+  // ---- 学历查分表 (客户报告 sheet, 男女通用) ----
   const EDU_TABLE = {
-    female: {
-      1: { phd: 6, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 1 },
-      2: { phd: 6, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 1 },
-      3: { phd: 7, master: 9, '985': 9, bachelor: 7, college: 5, highschool: 4, middleschool: 2 }
-    },
-    male: {
-      1: { phd: 8, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 1 },
-      2: { phd: 8, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 1 },
-      3: { phd: 8, master: 9, '985': 10, bachelor: 8, college: 5, highschool: 3, middleschool: 2 }
-    }
+    1: {phd:10,master:8,'985':6,bachelor:6,college:4,highschool:2,middleschool:1},
+    2: {phd:10,master:9,'985':7,bachelor:7,college:5,highschool:3,middleschool:1},
+    3: {phd:10,master:9,'985':8,bachelor:8,college:6,highschool:4,middleschool:2}
   };
 
-  // ---- 收入查分表 ----
+  // ---- 收入查分表 (客户报告 sheet, 男女通用) ----
   const INCOME_TABLE = {
-    female: {
-      1: { '100w+': 10, '50w_100w': 9, '30w_50w': 8, '15w_30w': 7, '10w_15w': 6, '5w_10w': 5, under5w: 4, none: 3 },
-      2: { '100w+': 10, '50w_100w': 10, '30w_50w': 9, '15w_30w': 8, '10w_15w': 7, '5w_10w': 6, under5w: 4, none: 3 },
-      3: { '100w+': 10, '50w_100w': 10, '30w_50w': 10, '15w_30w': 9, '10w_15w': 8, '5w_10w': 7, under5w: 5, none: 3 }
-    },
-    male: {
-      1: { '100w+': 10, '50w_100w': 9, '30w_50w': 8, '15w_30w': 7, '10w_15w': 5, '5w_10w': 3, under5w: 2, none: 1 },
-      2: { '100w+': 10, '50w_100w': 10, '30w_50w': 9, '15w_30w': 8, '10w_15w': 6, '5w_10w': 4, under5w: 2, none: 1 },
-      3: { '100w+': 10, '50w_100w': 10, '30w_50w': 10, '15w_30w': 9, '10w_15w': 7, '5w_10w': 5, under5w: 3, none: 1 }
-    }
+    1: {'100w+':10,'50w_100w':9,'30w_50w':8,'10w_30w':7,'5w_10w':6,'1w_5w':4,'under1w':2,'none':1},
+    2: {'100w+':10,'50w_100w':9,'30w_50w':8,'10w_30w':7,'5w_10w':6,'1w_5w':5,'under1w':3,'none':2},
+    3: {'100w+':10,'50w_100w':9,'30w_50w':8,'10w_30w':7,'5w_10w':6,'1w_5w':5,'under1w':4,'none':3}
   };
 
-  // ---- 家境查分表 ----
+  // ---- 家境查分表 (客户报告 sheet, 男女通用) ----
   const WEALTH_TABLE = {
-    female: {
-      1: { '100m+': 10, '50m_100m': 9, '10m_50m': 8, '5m_10m': 7, '1m_5m': 6, '500k_1m': 4, under500k: 2 },
-      2: { '100m+': 10, '50m_100m': 10, '10m_50m': 9, '5m_10m': 8, '1m_5m': 7, '500k_1m': 5, under500k: 3 },
-      3: { '100m+': 10, '50m_100m': 10, '10m_50m': 10, '5m_10m': 9, '1m_5m': 8, '500k_1m': 6, under500k: 4 }
-    },
-    male: {
-      1: { '100m+': 10, '50m_100m': 9, '10m_50m': 8, '5m_10m': 7, '1m_5m': 5, '500k_1m': 3, under500k: 1 },
-      2: { '100m+': 10, '50m_100m': 10, '10m_50m': 9, '5m_10m': 8, '1m_5m': 6, '500k_1m': 4, under500k: 2 },
-      3: { '100m+': 10, '50m_100m': 10, '10m_50m': 10, '5m_10m': 9, '1m_5m': 7, '500k_1m': 5, under500k: 3 }
-    }
+    1: {'100m+':10,'50m_100m':9,'10m_50m':8,'5m_10m':7,'1m_5m':5,'500k_1m':3,under500k:1},
+    2: {'100m+':10,'50m_100m':9,'10m_50m':8,'5m_10m':7,'1m_5m':6,'500k_1m':4,under500k:2},
+    3: {'100m+':10,'50m_100m':9,'10m_50m':8,'5m_10m':7,'1m_5m':6,'500k_1m':5,under500k:3}
   };
 
-  // ---- 婚姻扣分表 ----
+  // ---- 婚姻扣分表 (客户报告 sheet) ----
   const MARRIAGE_TABLE = {
     never: 0,
+    cohabited: 1,
     divorced_nochild: 2,
     divorced_other: 3,
-    divorced_self: 5
+    divorced_self: 4
   };
 
   // ═══════════════════════════════════════════
@@ -684,7 +546,6 @@
   // ═══════════════════════════════════════════
 
   const $ = id => document.getElementById(id);
-  const genderEl = $('gender');
   const cityEl = $('cityTier');
   const ageEl = $('age');
   const heightEl = $('height');
@@ -714,16 +575,15 @@
 
   function lookup(table, value) {
     for (const row of table) {
-      if (value <= row.max) return row.score;
+      if (value <= row.max) return row.s;
     }
     return 0;
   }
 
-  function getGender() { return genderEl.value; }
   function getCityTier() { return parseInt(cityEl.value, 10); }
 
   // ═══════════════════════════════════════════
-  //  4. Scoring functions
+  //  4. Scoring functions (女生专用)
   // ═══════════════════════════════════════════
 
   function calcAgeScore() {
@@ -731,51 +591,53 @@
     if (!birthYear) return null;
     const age = 2026 - birthYear;
     if (age < 16 || age > 80) return null;
-    const gender = getGender();
-    const tier = getCityTier();
-    return lookup(AGE_TABLE[gender][tier], age);
+    return lookup(AGE_TABLE[getCityTier()], age);
   }
 
   function calcHeightScore() {
     const cm = parseInt(heightEl.value, 10);
     if (!cm) return null;
-    const gender = getGender();
-    return lookup(HEIGHT_TABLE[gender], cm);
+    return lookup(HEIGHT_TABLE, cm);
   }
 
   function calcWeightScore() {
     const kg = parseFloat(weightEl.value);
     const cm = parseInt(heightEl.value, 10);
     if (!kg || !cm) return null;
-    const heightM = cm / 100;
-    const bmi = kg / (heightM * heightM);
-    if (bmi < 10 || bmi > 50) return null;
-    const gender = getGender();
-    return lookup(BMI_TABLE[gender], bmi);
+
+    // 美体体重 = height² × 20.02 / 10000 (BMI≈20, 来源:用户美体体重表)
+    const bw = (cm * cm) * 20.02 / 10000;       // 美体体重
+    const sw = (cm * cm) * 22 / 10000;          // 标准体重
+    const d = kg - bw; // 偏离美体: + = 偏重, - = 偏瘦
+
+    if (Math.abs(d) <= 1) return 10;
+    if (Math.abs(d) <= 2) return 9;
+    if (d > 2 && kg <= sw) return 8;
+    if (kg > sw && kg <= sw + 3) return 7;
+    if (kg > sw + 3 && kg <= sw + 5) return 6;
+    if ((kg > sw + 5 && kg <= sw + 10) || (d < -2 && d >= -5)) return 5;
+    if ((kg > sw + 10 && kg <= sw + 15) || (d < -5)) return 4;
+    if (kg > sw + 15 && kg <= sw + 20) return 3;
+    if (kg > sw + 20 && kg <= sw + 25) return 2;
+    return 1;
   }
 
   function calcEduScore() {
     const val = eduEl.value;
     if (!val) return null;
-    const gender = getGender();
-    const tier = getCityTier();
-    return EDU_TABLE[gender][tier][val] ?? null;
+    return EDU_TABLE[getCityTier()][val] ?? null;
   }
 
   function calcIncomeScore() {
     const val = incomeEl.value;
     if (!val) return null;
-    const gender = getGender();
-    const tier = getCityTier();
-    return INCOME_TABLE[gender][tier][val] ?? null;
+    return INCOME_TABLE[getCityTier()][val] ?? null;
   }
 
   function calcWealthScore() {
     const val = wealthEl.value;
     if (!val) return null;
-    const gender = getGender();
-    const tier = getCityTier();
-    return WEALTH_TABLE[gender][tier][val] ?? null;
+    return WEALTH_TABLE[getCityTier()][val] ?? null;
   }
 
   function calcMarriageScore() {
@@ -961,7 +823,7 @@
   // ═══════════════════════════════════════════
 
   const inputEls = [
-    genderEl, cityEl, ageEl, heightEl, weightEl,
+    cityEl, ageEl, heightEl, weightEl,
     eduEl, incomeEl, wealthEl, marriageEl
   ];
 
